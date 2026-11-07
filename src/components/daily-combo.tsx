@@ -22,7 +22,6 @@ interface DailyComboProps {
 }
 
 export function DailyCombo({ leagues }: DailyComboProps) {
-  // Extraction de tous les matchs
   const allMatches: { match: MatchPrediction; prob: number; leagueName: string }[] = [];
 
   leagues.forEach((league) => {
@@ -32,16 +31,16 @@ export function DailyCombo({ leagues }: DailyComboProps) {
     });
   });
 
-  // Sélection des 5 meilleurs matchs avec probabilité >= 65%
+  // Sélection des meilleures opportunités (en privilégiant les plus hautes probabilités)
   const bestSelections = allMatches
-    .filter((item) => item.prob >= 65)
     .sort((a, b) => b.prob - a.prob)
-    .slice(0, 5);
+    .slice(0, 4); // Garde le top 4 du jour
 
   if (bestSelections.length === 0) return null;
 
+  // Calcul d'une moyenne de confiance réaliste pour le combiné (Moyenne arithmétique)
   const totalComboProbability = Math.round(
-    bestSelections.reduce((acc, curr) => acc * (curr.prob / 100), 1) * 100
+    bestSelections.reduce((acc, curr) => acc + curr.prob, 0) / bestSelections.length
   );
 
   return (
@@ -58,7 +57,7 @@ export function DailyCombo({ leagues }: DailyComboProps) {
           </p>
         </div>
         <div className="bg-emerald-950/60 border border-emerald-500/40 px-4 py-2 rounded-xl text-right">
-          <span className="text-xs text-emerald-400 block font-medium">Confiance Globale Estimée</span>
+          <span className="text-xs text-emerald-400 block font-medium">Indice de Confiance Moyen</span>
           <span className="text-xl font-black text-emerald-300">{totalComboProbability}%</span>
         </div>
       </div>
