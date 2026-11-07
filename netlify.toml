@@ -1,0 +1,34 @@
+# Déploiement Next.js (App Router) sur Netlify via le plugin officiel.
+[build]
+  command = "npm run build"
+  publish = ".next"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+# Le plugin officiel gère le SSR, les fonctions serverless, les rewrites
+# et les images optimisées de Next.js automatiquement.
+[[plugins]]
+  package = "@netlify/plugin-nextjs"
+
+# En-têtes PWA : le manifest et les icônes sont mis en cache longtemps,
+# le service worker ne doit JAMAIS être mis en cache par le navigateur.
+[[headers]]
+  for = "/manifest.json"
+  [headers.values]
+    Cache-Control = "public, max-age=3600"
+
+[[headers]]
+  for = "/sw.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/icons/*"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
+
+[[headers]]
+  for = "/apple-touch-icon.png"
+  [headers.values]
+    Cache-Control = "public, max-age=31536000, immutable"
