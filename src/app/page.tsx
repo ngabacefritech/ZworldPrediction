@@ -34,7 +34,6 @@ export default function Home() {
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
 
-  // États pour le Simulateur de Paris et l'IA
   const [selectedBets, setSelectedBets] = useState<BetItem[]>([]);
   const [selectedMatchForAi, setSelectedMatchForAi] = useState<MatchPrediction | null>(null);
 
@@ -79,7 +78,6 @@ export default function Home() {
       .filter((league) => league.matches.length > 0);
   }, [data, activeFilter]);
 
-  // Gestion du Panier / Simulateur
   const handleToggleBet = (match: MatchPrediction) => {
     const tip = match.tip || "1X2";
     setSelectedBets((prev) => {
@@ -99,8 +97,8 @@ export default function Home() {
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-emerald-500 border-t-transparent rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-400 font-medium">Chargement des pronostics...</p>
+        <div className="w-8 h-8 border-3 border-emerald-500 border-t-transparent rounded-full animate-spin mb-3"></div>
+        <p className="text-xs text-slate-400 font-medium">Chargement des pronostics...</p>
       </main>
     );
   }
@@ -108,49 +106,50 @@ export default function Home() {
   if (error || !data) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
-        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-6 rounded-2xl max-w-md text-center">
-          <h2 className="text-lg font-bold mb-2">Erreur</h2>
-          <p className="text-sm text-slate-300">{error || "Données indisponibles."}</p>
+        <div className="bg-red-500/10 border border-red-500/30 text-red-400 p-5 rounded-2xl max-w-xs text-center text-xs">
+          <h2 className="font-bold mb-1">Erreur</h2>
+          <p className="text-slate-300">{error || "Données indisponibles."}</p>
         </div>
       </main>
     );
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-28">
-      <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
-        <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-32">
+      {/* En-tête mobile compact */}
+      <header className="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-30 px-3 py-3">
+        <div className="max-w-md mx-auto flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
-              Zworld Prediction PWA
+            <h1 className="text-lg font-black bg-gradient-to-r from-emerald-400 to-cyan-400 bg-clip-text text-transparent">
+              Zworld PWA
             </h1>
-            <p className="text-xs text-slate-400">Analyses statistiques, Safe Picks & Scores en Direct</p>
+            <p className="text-[10px] text-slate-400">Safe Picks & Live Scores</p>
           </div>
-          <div className="flex items-center gap-3">
-            <span className="text-xs bg-slate-800 border border-slate-700 px-3 py-1.5 rounded-full text-slate-300">
-              ⚡ Synchro : {new Date(data.scrapedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-            </span>
-          </div>
+          <span className="text-[10px] bg-slate-800 border border-slate-700 px-2.5 py-1 rounded-full text-slate-300 font-mono">
+            ⚡ {new Date(data.scrapedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+          </span>
         </div>
       </header>
 
-      <div className="max-w-6xl mx-auto px-4 mt-8">
+      <div className="max-w-md mx-auto px-3 mt-4">
+        {/* Combiné du jour */}
         <DailyCombo leagues={data.leagues} />
 
-        <div className="flex items-center gap-2 overflow-x-auto pb-4 mb-6 scrollbar-none">
+        {/* Filtres par risque (Scroll horizontal tactile) */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-2 mb-4 scrollbar-none -mx-3 px-3">
           {[
-            { id: "all", label: "Tous les Matchs" },
-            { id: "ultrasafe", label: "🔥 Ultra Safe (≥80%)" },
-            { id: "safe", label: "🛡️ Safe (65-79%)" },
-            { id: "moins-safe", label: "⚡ Moins Safe (<65%)" },
+            { id: "all", label: "Tous" },
+            { id: "ultrasafe", label: "🔥 Ultra Safe" },
+            { id: "safe", label: "🛡️ Safe" },
+            { id: "moins-safe", label: "⚡ Moins Safe" },
           ].map((tab) => (
             <button
               key={tab.id}
               onClick={() => setActiveFilter(tab.id)}
-              className={`px-4 py-2 rounded-xl text-xs font-bold transition whitespace-nowrap border ${
+              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition whitespace-nowrap border ${
                 activeFilter === tab.id
-                  ? "bg-emerald-500 text-slate-950 border-emerald-400 shadow-lg shadow-emerald-500/20"
-                  : "bg-slate-900 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-white"
+                  ? "bg-emerald-500 text-slate-950 border-emerald-400 shadow-md shadow-emerald-500/20"
+                  : "bg-slate-900 text-slate-400 border-slate-800 hover:text-white"
               }`}
             >
               {tab.label}
@@ -158,27 +157,30 @@ export default function Home() {
           ))}
         </div>
 
+        {/* Liste des ligues et matchs */}
         {filteredLeagues.length === 0 ? (
-          <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-12 text-center">
-            <p className="text-slate-400">Aucun match ne correspond à ce filtre pour le moment.</p>
+          <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-8 text-center text-xs text-slate-400">
+            Aucun match ne correspond à ce filtre.
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-4">
             {filteredLeagues.map((league) => (
-              <div key={league.id} className="bg-slate-900/60 border border-slate-800 rounded-2xl p-5 shadow-xl">
-                <div className="flex items-center gap-3 pb-4 mb-4 border-b border-slate-800/80">
+              <div key={league.id} className="bg-slate-900/60 border border-slate-800/80 rounded-xl p-3.5 shadow-lg">
+                {/* Entête de ligue */}
+                <div className="flex items-center gap-2.5 pb-2.5 mb-3 border-b border-slate-800/80">
                   {league.flag ? (
-                    <img src={league.flag} alt="" className="w-6 h-6 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
+                    <img src={league.flag} alt="" className="w-5 h-5 object-contain" onError={(e) => (e.currentTarget.style.display = 'none')} />
                   ) : (
-                    <span className="w-3 h-3 rounded-full bg-emerald-500"></span>
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500"></span>
                   )}
                   <div>
-                    <h2 className="text-base font-bold text-white">{league.name}</h2>
-                    {league.country && <p className="text-xs text-slate-400">{league.country}</p>}
+                    <h2 className="text-xs font-bold text-white leading-tight">{league.name}</h2>
+                    {league.country && <p className="text-[10px] text-slate-400">{league.country}</p>}
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {/* Grille verticale mobile d'une seule colonne */}
+                <div className="space-y-3">
                   {league.matches.map((match, idx) => {
                     const prob = getMatchProbability(match);
                     const category = getSafetyCategory(prob);
@@ -187,59 +189,59 @@ export default function Home() {
                     return (
                       <div
                         key={match.id || idx}
-                        className="bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition rounded-xl p-4 flex flex-col justify-between"
+                        className="bg-slate-950/80 border border-slate-800 rounded-lg p-3 flex flex-col justify-between"
                       >
                         <div>
-                          <div className="flex justify-between items-center mb-3">
-                            <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                          {/* Ligne haute */}
+                          <div className="flex justify-between items-center mb-2">
+                            <span className="text-[10px] font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
                               🕒 {match.time}
                             </span>
-                            <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${category.color}`}>
+                            <span className={`text-[10px] px-2 py-0.5 rounded-full border font-semibold ${category.color}`}>
                               {category.label} ({prob}%)
                             </span>
                           </div>
 
-                          <div className="my-2 space-y-1.5">
-                            <div className="text-sm font-semibold text-slate-200">{match.home}</div>
-                            <div className="text-sm font-semibold text-slate-200">{match.away}</div>
+                          {/* Équipes */}
+                          <div className="my-2 space-y-1">
+                            <div className="text-xs font-bold text-slate-100">{match.home}</div>
+                            <div className="text-xs font-bold text-slate-100">{match.away}</div>
                           </div>
                         </div>
 
-                        <div>
-                          {/* Ligne Prono & Score */}
-                          <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
-                            <div className="flex items-center gap-2">
-                              <span className="text-slate-400">Prono :</span>
-                              <span className="font-bold text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-900/40 font-mono">
-                                {match.tip || "N/A"}
-                              </span>
+                        {/* Prono & Score */}
+                        <div className="mt-2.5 pt-2 border-t border-slate-900 flex items-center justify-between text-[11px]">
+                          <div className="flex items-center gap-1.5">
+                            <span className="text-slate-400">Prono:</span>
+                            <span className="font-bold text-emerald-400 bg-emerald-950/50 px-2 py-0.5 rounded border border-emerald-900/40 font-mono">
+                              {match.tip || "N/A"}
+                            </span>
+                          </div>
+                          {match.exactScore && (
+                            <div className="text-slate-400">
+                              Score: <span className="font-mono font-bold text-white">{match.exactScore}</span>
                             </div>
-                            {match.exactScore && (
-                              <div className="text-slate-400">
-                                Score : <span className="font-mono font-bold text-white">{match.exactScore}</span>
-                              </div>
-                            )}
-                          </div>
+                          )}
+                        </div>
 
-                          {/* Boutons d'action : IA & Ajout au panier */}
-                          <div className="mt-3 pt-2 flex items-center gap-2">
-                            <button
-                              onClick={() => setSelectedMatchForAi(match)}
-                              className="flex-1 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-300 text-xs py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5"
-                            >
-                              🤖 Analyse IA
-                            </button>
-                            <button
-                              onClick={() => handleToggleBet(match)}
-                              className={`flex-1 text-xs py-1.5 px-3 rounded-lg font-bold transition border ${
-                                isSelected
-                                  ? "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30"
-                                  : "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
-                              }`}
-                            >
-                              {isSelected ? "Retirer du combiné" : "+ Ajouter au combiné"}
-                            </button>
-                          </div>
+                        {/* Boutons d'action tactiles */}
+                        <div className="mt-3 pt-2 border-t border-slate-900/60 flex items-center gap-2">
+                          <button
+                            onClick={() => setSelectedMatchForAi(match)}
+                            className="flex-1 bg-indigo-950/50 border border-indigo-500/30 text-indigo-300 text-[11px] py-1.5 px-2 rounded-lg font-medium active:scale-95 transition flex items-center justify-center gap-1"
+                          >
+                            🤖 IA
+                          </button>
+                          <button
+                            onClick={() => handleToggleBet(match)}
+                            className={`flex-1 text-[11px] py-1.5 px-2 rounded-lg font-bold transition border active:scale-95 ${
+                              isSelected
+                                ? "bg-red-500/20 text-red-400 border-red-500/40"
+                                : "bg-emerald-500/20 text-emerald-400 border-emerald-500/40"
+                            }`}
+                          >
+                            {isSelected ? "Retirer" : "+ Combiné"}
+                          </button>
                         </div>
                       </div>
                     );
@@ -251,7 +253,7 @@ export default function Home() {
         )}
       </div>
 
-      {/* Composants Flottants : Panier/Simulateur & Modale IA */}
+      {/* Composants Flottants */}
       <BetSimulator
         selectedBets={selectedBets}
         onRemoveBet={handleRemoveBet}
