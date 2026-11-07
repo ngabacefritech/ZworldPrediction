@@ -3,6 +3,13 @@
 import { useState, useEffect, useMemo } from "react";
 import { PredictionsResponse, MatchPrediction } from "@/lib/types";
 import { DailyCombo } from "@/components/daily-combo";
+import { BetSimulator } from "@/components/bet-simulator";
+import { MatchAiModal } from "@/components/match-ai-modal";
+
+interface BetItem {
+  match: MatchPrediction;
+  selectedTip: string;
+}
 
 function getMatchProbability(match: MatchPrediction): number {
   const { home, draw, away } = match.probs;
@@ -26,6 +33,10 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<string | null>(null);
   const [activeFilter, setActiveFilter] = useState<string>("all");
+
+  // États pour le Simulateur de Paris et l'IA
+  const [selectedBets, setSelectedBets] = useState<BetItem[]>([]);
+  const [selectedMatchForAi, setSelectedMatchForAi] = useState<MatchPrediction | null>(null);
 
   useEffect(() => {
     async function fetchPredictions() {
@@ -68,6 +79,23 @@ export default function Home() {
       .filter((league) => league.matches.length > 0);
   }, [data, activeFilter]);
 
+  // Gestion du Panier / Simulateur
+  const handleToggleBet = (match: MatchPrediction) => {
+    const tip = match.tip || "1X2";
+    setSelectedBets((prev) => {
+      const exists = prev.some((item) => item.match.id === match.id);
+      if (exists) {
+        return prev.filter((item) => item.match.id !== match.id);
+      } else {
+        return [...prev, { match, selectedTip: tip }];
+      }
+    });
+  };
+
+  const handleRemoveBet = (matchId: string) => {
+    setSelectedBets((prev) => prev.filter((item) => item.match.id !== matchId));
+  };
+
   if (loading) {
     return (
       <main className="min-h-screen bg-slate-950 text-white flex flex-col items-center justify-center p-4">
@@ -89,7 +117,7 @@ export default function Home() {
   }
 
   return (
-    <main className="min-h-screen bg-slate-950 text-slate-100 pb-16">
+    <main className="min-h-screen bg-slate-950 text-slate-100 pb-28">
       <header className="border-b border-slate-800 bg-slate-900/50 backdrop-blur sticky top-0 z-30">
         <div className="max-w-6xl mx-auto px-4 py-4 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div>
@@ -154,43 +182,64 @@ export default function Home() {
                   {league.matches.map((match, idx) => {
                     const prob = getMatchProbability(match);
                     const category = getSafetyCategory(prob);
-                    const isLive = false;
+                    const isSelected = selectedBets.some((b) => b.match.id === match.id);
 
                     return (
                       <div
                         key={match.id || idx}
                         className="bg-slate-950/60 border border-slate-800/80 hover:border-slate-700 transition rounded-xl p-4 flex flex-col justify-between"
                       >
-                        <div className="flex justify-between items-center mb-3">
-                          <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
-                            🕒 {match.time}
-                          </span>
-                          <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${category.color}`}>
-                            {category.label} ({prob}%)
-                          </span>
-                        </div>
-
-                        <div className="my-2 space-y-1.5">
-                          <div className="flex justify-between items-center text-sm font-semibold text-slate-200">
-                            <span>{match.home}</span>
-                          </div>
-                          <div className="flex justify-between items-center text-sm font-semibold text-slate-200">
-                            <span>{match.away}</span>
-                          </div>
-                        </div>
-
-                        <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
-                          <div className="flex items-center gap-2">
-                            <span className="text-slate-400">Prono :</span>
-                            <span className="font-bold text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-900/40 font-mono">
-                              {match.tip || "N/A"}
+                        <div>
+                          <div className="flex justify-between items-center mb-3">
+                            <span className="text-xs font-mono text-slate-400 bg-slate-900 px-2 py-0.5 rounded border border-slate-800">
+                              🕒 {match.time}
+                            </span>
+                            <span className={`text-xs px-2.5 py-0.5 rounded-full border font-semibold ${category.color}`}>
+                              {category.label} ({prob}%)
                             </span>
                           </div>
-                          {match.exactScore && (
-                            <div className="text-slate-400">
-                              Score : <span className="font-mono font-bold text-white">{match.exactScore}</span>
+
+                          <div className="my-2 space-y-1.5">
+                            <div className="text-sm font-semibold text-slate-200">{match.home}</div>
+                            <div className="text-sm font-semibold text-slate-200">{match.away}</div>
+                          </div>
+                        </div>
+
+                        <div>
+                          {/* Ligne Prono & Score */}
+                          <div className="mt-3 pt-3 border-t border-slate-900 flex items-center justify-between text-xs">
+                            <div className="flex items-center gap-2">
+                              <span className="text-slate-400">Prono :</span>
+                              <span className="font-bold text-emerald-400 bg-emerald-950/40 px-2.5 py-1 rounded border border-emerald-900/40 font-mono">
+                                {match.tip || "N/A"}
+                              </span>
                             </div>
-                          )}
+                            {match.exactScore && (
+                              <div className="text-slate-400">
+                                Score : <span className="font-mono font-bold text-white">{match.exactScore}</span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Boutons d'action : IA & Ajout au panier */}
+                          <div className="mt-3 pt-2 flex items-center gap-2">
+                            <button
+                              onClick={() => setSelectedMatchForAi(match)}
+                              className="flex-1 bg-indigo-950/40 hover:bg-indigo-900/60 border border-indigo-500/30 text-indigo-300 text-xs py-1.5 px-3 rounded-lg font-medium transition flex items-center justify-center gap-1.5"
+                            >
+                              🤖 Analyse IA
+                            </button>
+                            <button
+                              onClick={() => handleToggleBet(match)}
+                              className={`flex-1 text-xs py-1.5 px-3 rounded-lg font-bold transition border ${
+                                isSelected
+                                  ? "bg-red-500/20 text-red-400 border-red-500/40 hover:bg-red-500/30"
+                                  : "bg-emerald-500/20 text-emerald-400 border-emerald-500/40 hover:bg-emerald-500/30"
+                              }`}
+                            >
+                              {isSelected ? "Retirer du combiné" : "+ Ajouter au combiné"}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     );
@@ -201,6 +250,18 @@ export default function Home() {
           </div>
         )}
       </div>
+
+      {/* Composants Flottants : Panier/Simulateur & Modale IA */}
+      <BetSimulator
+        selectedBets={selectedBets}
+        onRemoveBet={handleRemoveBet}
+        onClear={() => setSelectedBets([])}
+      />
+
+      <MatchAiModal
+        match={selectedMatchForAi}
+        onClose={() => setSelectedMatchForAi(null)}
+      />
     </main>
   );
 }
